@@ -32,6 +32,8 @@ ParamKey = 'param'
 TimeKey = 't'
 VoltKey = 'v'
 CurrKey = 'i'
+CurrFKey = 'if'
+CurrRKey = 'ir'
 ChanKey = 'n'
 RefVoltKey = 'r'
 VoltRangeKey = 'voltRange'
@@ -53,6 +55,8 @@ StopTestCmd = 'stopTest'
 GetVoltCmd = 'getVolt'
 SetVoltCmd = 'setVolt'
 GetCurrCmd = 'getCurr'
+GetCurrFCmd = 'getCurrF'
+GetCurrRCmd = 'getCurrR'
 GetRefVoltCmd = 'getRefVolt'
 GetParamCmd = 'getParam'
 SetParamCmd = 'setParam'
@@ -210,6 +214,24 @@ class Potentiostat(serial.Serial):
         msg_dict = self.send_cmd(cmd_dict)
         curr = msg_dict[ResponseKey][CurrKey]
         return curr
+
+    def get_currF(self):
+        """Returns an immediate measurement of electrical current in/out of the working electrodei (forward).
+
+        """
+        cmd_dict = {CommandKey: GetCurrFCmd}
+        msg_dict = self.send_cmd(cmd_dict)
+        currF = msg_dict[ResponseKey][CurrFKey]
+        return currF
+
+    def get_currR(self):
+        """Returns and immediate measurement of electrical current in/out of the working electrode (reverse).
+
+        """
+        cmd_dict = {CommandKey: GetCurrRCmd}
+        msg_dict = self.send_cmd(cmd_dict)
+        currR = msg_dict[ResponseKey][CurrRKey]
+        return currR
 
 
     def get_ref_volt(self):
@@ -523,7 +545,7 @@ class Potentiostat(serial.Serial):
             pbar = progressbar.ProgressBar(widgets=widgets,maxval=test_done_tval)
             pbar.start()
 
-        data_dict = {chan:{TimeKey:[],VoltKey:[],CurrKey:[]} for chan in channel_list}
+        data_dict = {chan:{TimeKey:[],VoltKey:[],CurrKey:[],CurrFKey:[],CurrRKey:[]} for chan in channel_list}
 
         # Determine output file type and open if required
         if filename is not None:
@@ -551,27 +573,29 @@ class Potentiostat(serial.Serial):
                 tval = sample_dict[TimeKey]*TimeUnitToScale[timeunit]
                 volt = sample_dict[VoltKey]
                 curr = sample_dict[CurrKey]
+                currF = sample_dict[CurrFKey]
+                currR = sample_dict[CurrRKey]
                 chan = 0  # Dummy channel used when mux isn't running
 
                 if mux_enabled:
                     chan = sample_dict[ChanKey]
 
-                for k,v in [(TimeKey,tval),(VoltKey,volt),(CurrKey,curr)]:
+                for k,v in [(TimeKey,tval),(VoltKey,volt),(CurrKey,curr),(CurrFKey,currF),(CurrRKey,currR)]:
                     data_dict[chan][k].append(v)
 
                 # Write data to file
                 if (filename is not None) and (output_filetype == TxtOutputFileType):
                     if chan == 0:
-                        fid.write('{0:1.3f}, {1:1.4f}, {2:1.4f}\n'.format(tval,volt,curr))
+                        fid.write('{0:1.3f}, {1:1.4f}, {2:1.4f}, {3:1.4f}, {4:1.4f}\n'.format(tval,volt,curr,currF,currR))
                     else:
-                        fid.write('{0}, {1:1.3f}, {2:1.4f}, {3:1.4f}\n'.format(chan,tval,volt,curr))
+                        fid.write('{0}, {1:1.3f}, {2:1.4f}, {3:1.4f}, {4:1.4f}, {5:1.4f}\n'.format(chan,tval,volt,curr,currF,currR))
 
                 # Handle diplay options
                 if display == 'data':
                     if chan == 0:
-                        print('{0:1.3f}, {1:1.4f}, {2:1.4f}'.format(tval,volt,curr))
+                        print('{0:1.3f}, {1:1.4f}, {2:1.4f}, {3:1.4f}, {4:1.4f}'.format(tval,volt,curr,currF,currR))
                     else:
-                        print('ch{0}: {1:1.3f}, {2:1.4f}, {3:1.4f}'.format(chan,tval,volt,curr))
+                        print('ch{0}: {1:1.3f}, {2:1.4f}, {3:1.4f}, {4:1.4f}, {5:1.4f}'.format(chan,tval,volt,curr,currF,currR))
 
                 elif display == 'pbar':
                     pbar.update(tval)
@@ -597,7 +621,7 @@ class Potentiostat(serial.Serial):
         if mux_enabled:
             return data_dict 
         else:
-            return data_dict[0][TimeKey], data_dict[0][VoltKey], data_dict[0][CurrKey]
+            return data_dict[0][TimeKey], data_dict[0][VoltKey], data_dict[0][CurrKey], data_dict[0][CurrFKey], data_dict[0][CurrRKey]
 
 
     def send_cmd(self,cmd_dict):

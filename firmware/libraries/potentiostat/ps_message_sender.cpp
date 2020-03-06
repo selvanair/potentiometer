@@ -28,6 +28,8 @@ namespace ps
         jsonSample.set(TimeKey, convertUsToMs(sample.t)); 
         jsonSample.set(VoltKey, sample.volt);
         jsonSample.set(CurrKey, sample.curr);
+        jsonSample.set(CurrFKey, sample.currF);
+        jsonSample.set(CurrRKey, sample.currR);
         if (sample.chan > 0)
         {
             jsonSample.set(ChanKey, sample.chan);

@@ -27,16 +27,18 @@ dev.set_sample_rate(sample_rate)
 dev.set_param(test_name,test_param)
 
 # Run cyclic voltammetry test
-t,volt,curr = dev.run_test(test_name,display='pbar',filename=datafile)
+t,volt,curr,currF,currR = dev.run_test(test_name,display='pbar',filename=datafile)
 
 # Convert values to scipy arrays
 t = scipy.array(t)
 volt = scipy.array(volt)
 curr = scipy.array(curr)
+currF = scipy.array(currF)
+currR = scipy.array(currrR)
 
 # Remove values during quiet time
 ind = t > test_param['quietTime']*1.0e-3
-t, volt, curr  = t[ind], volt[ind], curr[ind]
+t, volt, curr, currF, currR  = t[ind], volt[ind], curr[ind], currF[ind], currR[ind]
 t = t - t[0]
 
 # plot results using matplotlib
@@ -63,6 +65,18 @@ plt.plot(volt,curr)
 plt.xlabel('potential (V)')
 plt.ylabel('current (uA)')
 plt.ylim(ymin, ymax)
+plt.grid('on')
+
+plt.figure(3)
+plt.plot(t,currF)
+plt.ylabel('forward current (uA)')
+plt.xlabel('time (sec)')
+plt.grid('on')
+
+plt.figure(4)
+plt.plot(t,currR)
+plt.ylabel('reverse current (uA)')
+plt.xlabel('time (sec)')
 plt.grid('on')
 
 plt.show()
