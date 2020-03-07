@@ -36,6 +36,8 @@ namespace ps
     extern const String TimeKey;
     extern const String VoltKey;
     extern const String CurrKey;
+    extern const String CurrFKey;
+    extern const String CurrRKey;
     extern const String ChanKey;
     extern const String RefVoltKey;
     extern const String ParamKey;
@@ -72,6 +74,8 @@ namespace ps
     extern const String GetVoltCmd;
     extern const String SetVoltCmd;
     extern const String GetCurrCmd;
+    extern const String GetCurrFCmd;
+    extern const String GetCurrRCmd;
     extern const String GetRefVoltCmd;
     extern const String SetParamCmd;
     extern const String GetParamCmd;
