@@ -30,8 +30,6 @@ namespace ps
         commandTable_.registerMethod(CommandKey,   GetVoltCmd,            &SystemState::onCommandGetVolt);
         commandTable_.registerMethod(CommandKey,   SetVoltCmd,            &SystemState::onCommandSetVolt);
         commandTable_.registerMethod(CommandKey,   GetCurrCmd,            &SystemState::onCommandGetCurr);
-        commandTable_.registerMethod(CommandKey,   GetCurrFCmd,           &SystemState::onCommandGetCurrF);
-        commandTable_.registerMethod(CommandKey,   GetCurrRCmd,           &SystemState::onCommandGetCurrR);
         commandTable_.registerMethod(CommandKey,   GetRefVoltCmd,         &SystemState::onCommandGetRefVolt);
         commandTable_.registerMethod(CommandKey,   SetParamCmd,           &SystemState::onCommandSetTestParam);
         commandTable_.registerMethod(CommandKey,   GetParamCmd,           &SystemState::onCommandGetTestParam);
@@ -168,21 +166,6 @@ namespace ps
         return status;
     }
 
-    ReturnStatus SystemState::onCommandGetCurrF(JsonObject &jsonMsg, JsonObject &jsonDat)
-    {
-        ReturnStatus status;
-        float curr = analogSubsystem_.getCurr();
-        jsonDat.set(CurrFKey,curr);
-        return status;
-    }
-
-    ReturnStatus SystemState::onCommandGetCurrR(JsonObject &jsonMsg, JsonObject &jsonDat)
-    {
-        ReturnStatus status;
-        float curr = analogSubsystem_.getCurr();
-        jsonDat.set(CurrRKey,curr);
-        return status;
-    }
 
     ReturnStatus SystemState::onCommandGetRefVolt(JsonObject &jsonMsg, JsonObject &jsonDat)
     {

@@ -57,8 +57,6 @@ namespace ps
     const String GetVoltCmd = String("getVolt");
     const String SetVoltCmd = String("setVolt");
     const String GetCurrCmd = String("getCurr");
-    const String GetCurrFCmd = String("getCurrF");
-    const String GetCurrRCmd = String("getCurrR");
     const String GetRefVoltCmd = String("getRefVolt");
     const String SetParamCmd = String("setParam");
     const String GetParamCmd = String("getParam");

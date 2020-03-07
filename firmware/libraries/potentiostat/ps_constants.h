@@ -74,8 +74,6 @@ namespace ps
     extern const String GetVoltCmd;
     extern const String SetVoltCmd;
     extern const String GetCurrCmd;
-    extern const String GetCurrFCmd;
-    extern const String GetCurrRCmd;
     extern const String GetRefVoltCmd;
     extern const String SetParamCmd;
     extern const String GetParamCmd;

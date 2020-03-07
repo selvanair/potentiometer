@@ -55,8 +55,6 @@ StopTestCmd = 'stopTest'
 GetVoltCmd = 'getVolt'
 SetVoltCmd = 'setVolt'
 GetCurrCmd = 'getCurr'
-GetCurrFCmd = 'getCurrF'
-GetCurrRCmd = 'getCurrR'
 GetRefVoltCmd = 'getRefVolt'
 GetParamCmd = 'getParam'
 SetParamCmd = 'setParam'
@@ -214,24 +212,6 @@ class Potentiostat(serial.Serial):
         msg_dict = self.send_cmd(cmd_dict)
         curr = msg_dict[ResponseKey][CurrKey]
         return curr
-
-    def get_currF(self):
-        """Returns an immediate measurement of electrical current in/out of the working electrodei (forward).
-
-        """
-        cmd_dict = {CommandKey: GetCurrFCmd}
-        msg_dict = self.send_cmd(cmd_dict)
-        currF = msg_dict[ResponseKey][CurrFKey]
-        return currF
-
-    def get_currR(self):
-        """Returns and immediate measurement of electrical current in/out of the working electrode (reverse).
-
-        """
-        cmd_dict = {CommandKey: GetCurrRCmd}
-        msg_dict = self.send_cmd(cmd_dict)
-        currR = msg_dict[ResponseKey][CurrRKey]
-        return currR
 
 
     def get_ref_volt(self):

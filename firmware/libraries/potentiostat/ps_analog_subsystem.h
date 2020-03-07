@@ -30,8 +30,6 @@ namespace ps
             float getVolt() const;     
             
             float getCurr() const;           
-            float getCurrF() const;
-            float getCurrR() const;
             float getRefElectVolt() const;   
 
             void setVoltRange(VoltRange range);  
