@@ -283,7 +283,7 @@ namespace ps
                     status.success = false;
                     status.message = String("json ") + SamplePeriodKey + String(" value is too large");
                 }
-                else if (samplePeriodUs < MinimumSamplePeriod)
+                else if (samplePeriodUs < TestTimerPeriod)
                 {
                     status.success = false;
                     status.message = String("json ") + SamplePeriodKey + String(" value is too small");
@@ -746,7 +746,7 @@ namespace ps
         }
         else
         {
-            uint64_t t = uint64_t(TestTimerPeriod)*timerCnt_;
+            uint32_t t = uint32_t(TestTimerPeriod)*timerCnt_;
             float volt = test_ -> getValue(t);
             analogSubsystem_.setVolt(volt);
             float curr = analogSubsystem_.getCurr();
@@ -853,7 +853,7 @@ namespace ps
 
     void SystemState::setSamplePeriod(uint32_t samplePeriod)
     {
-        samplePeriod_ = constrain(samplePeriod, MinimumSamplePeriod, MaximumSamplePeriod);
+        samplePeriod_ = constrain(samplePeriod, TestTimerPeriod, MaximumSamplePeriod);
         updateSampleModulus();
         voltammetry_.setSamplePeriod(uint64_t(samplePeriod_));
     }

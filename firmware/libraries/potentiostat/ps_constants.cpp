@@ -139,7 +139,6 @@ namespace ps
     // Timer parameters
     const uint32_t TestTimerPeriod = 200;                // us
     const uint32_t DefaultSamplePeriod = 10000;          // us
-    extern const uint32_t MinimumSamplePeriod = 1000;    // us
     extern const uint32_t MaximumSamplePeriod = 1000000; // us
 
     // Low pass filter params for current samples
