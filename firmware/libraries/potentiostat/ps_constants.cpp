@@ -4,7 +4,7 @@
 
 namespace ps
 { 
-    const String FirmwareVersion = String("0.0.6");
+    const String FirmwareVersion = String("0.0.7");
 
     // Serial parameters
     const uint32_t UsbSerialBaudrate = 115200;
