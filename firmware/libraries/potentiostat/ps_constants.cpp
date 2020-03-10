@@ -48,6 +48,7 @@ namespace ps
     const String MuxEnabledKey = String("muxEnabled");
     const String MuxChannelKey = String("muxChannel");
     const String ConnectedKey = String("connected");
+    const String FreeMemKey = String("m");
 
     // Json command strings
     const String RunTestCmd = String("runTest");

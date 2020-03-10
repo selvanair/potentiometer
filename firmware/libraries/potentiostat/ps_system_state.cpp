@@ -1,6 +1,7 @@
 #include "ps_system_state.h"
 #include "ps_device_id_eeprom.h"
 #include "util/atomic.h"
+#include "freemem.h"
 
 
 namespace ps
@@ -699,6 +700,11 @@ namespace ps
         if (lastSampleFlag_)
         {
             run_complete = true;
+        }
+
+        ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
+        {
+            min_freemem(); // checks free momory and updates minmum value so far
         }
 
         // Empty data buffer
