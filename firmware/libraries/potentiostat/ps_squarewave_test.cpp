@@ -194,7 +194,6 @@ namespace ps
                 sampleTest.volt = quietValue_;
                 sampleTest.curr =  0.0;
                 sampleTest.currF =  0.0;
-                sampleTest.currR =  0.0;
                 newSample = true;
             }
             testCnt_++;
@@ -233,9 +232,8 @@ namespace ps
             {
                 sampleTest.t = sampleRaw.t;
                 sampleTest.volt = getStairValue(sampleRaw.t);
-                sampleTest.curr = currForward_/numForward_ - currReverse_/numReverse_;
                 sampleTest.currF = currForward_/numForward_;
-                sampleTest.currR = currReverse_/numReverse_;
+                sampleTest.curr = sampleTest.currF - currReverse_/numReverse_;
                 numForward_ = 0;
                 numReverse_ = 0;
                 currForward_ = 0.0;

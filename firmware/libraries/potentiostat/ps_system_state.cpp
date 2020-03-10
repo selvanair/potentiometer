@@ -771,7 +771,7 @@ namespace ps
                     // ------------------------------------------------------------------
                     if (timerCnt_%sampleModulus_ == 0)
                     {
-                        Sample sample = {t, volt, currLowPass_[electInd].value(), 0.0, 0.0, uint8_t(electNum)};
+                        Sample sample = {t, volt, currLowPass_[electInd].value(), 0.0, uint8_t(electNum)};
                         dataBuffer_.push_back(sample);
                         if (multiplexer_.isRunning())
                         {
@@ -784,8 +784,8 @@ namespace ps
                     // ------------------------------------------------------------------
                     // Send sample for tests which use custom sampling methods
                     // ------------------------------------------------------------------
-                    Sample sampleRaw  = {t, volt, currLowPass_[0].value(), 0.0, 0.0, uint8_t(electNum)}; // Raw sample data
-                    Sample sampleTest = {0, 0.0, 0.0, 0.0, 0.0, uint8_t(electNum)}; // Custom sample data (set in updateSample)
+                    Sample sampleRaw  = {t, volt, currLowPass_[0].value(), 0.0, uint8_t(electNum)}; // Raw sample data
+                    Sample sampleTest = {0, 0.0, 0.0, 0.0, uint8_t(electNum)}; // Custom sample data (set in updateSample)
                     if (test_ -> updateSample(sampleRaw, sampleTest))
                     {
                         dataBuffer_.push_back(sampleTest);

@@ -21,7 +21,6 @@ namespace ps
     const String VoltKey = String("v");
     const String CurrKey = String("i");
     const String CurrFKey = String("if");
-    const String CurrRKey = String("ir");
     const String ChanKey = String("n");
     const String RefVoltKey = String("r");
     const String ParamKey = String("param");
