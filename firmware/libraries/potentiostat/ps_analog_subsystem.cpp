@@ -91,6 +91,12 @@ namespace ps
         return currRange_.intToValue(value);
     }
 
+    // Convert float value current to raw
+    uint16_t AnalogSubsystem::CurrToInt(float value) const
+    {
+        return currRange_.valueToInt(value);
+    }
+
 
     float AnalogSubsystem::getRefElectVolt() const   
     {

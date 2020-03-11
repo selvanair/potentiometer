@@ -88,7 +88,13 @@ namespace ps
     void BaseTest::setSamplePeriod(uint64_t samplePeriod)
     {
         samplePeriod_ = samplePeriod;
-        sampleModulus_ = samplePeriod_/TestTimerPeriod;
+        sampleModulus_ = samplePeriod_/testTimerPeriod_;
+    }
+
+    void BaseTest::setTestTimerPeriod(uint64_t value)
+    {
+        testTimerPeriod_ = value;
+        sampleModulus_ = samplePeriod_/testTimerPeriod_;
     }
 
 

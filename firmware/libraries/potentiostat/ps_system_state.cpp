@@ -13,6 +13,8 @@ namespace ps
         lastSampleFlag_ = false;
         timerCnt_ = 0;
         test_ = nullptr;
+        testTimerPeriod_ = TestTimerPeriod;
+        dataSendMethod_ = DataProgressive;
 
         //currLowPass_.setParam(CurrLowPassParam);
         for (int i=0; i<NumMuxChan; i++)
@@ -103,10 +105,58 @@ namespace ps
             }
         }
 
+        status = setupTestTimerHandler();
+        if (!status.success)
+        {
+            return status;
+        }
         startTest();
         return status;
     }
 
+    ReturnStatus SystemState::setupTestTimerHandler(void)
+    {
+        ReturnStatus status;
+
+        if ((test_->getSampleMethod() == SampleCustom) || (samplePeriod_ > 1000))
+        {
+            setTestTimerPeriod(TestTimerPeriod);
+
+            dataSendMethod_ = DataProgressive; // progressively send data during the test
+        }
+        else
+        {
+            // use timer period same as sample perod and buffer samples till end of test
+            uint64_t timemax = test_->getDoneTime();
+            testEndCnt_ = int(timemax/samplePeriod_);
+
+            if (testEndCnt_ > DataBufferSize)
+            {
+                status.success = false;
+                status.message = "Not enough sapce for fast sampling run. Reduce number of samples.";
+                return status;
+            }
+
+            setTestTimerPeriod(samplePeriod_);
+
+            dataSendMethod_ = DataBuffered; // send data after the test is complete
+
+            ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
+            {
+                dataBuffer_.clear(); // this will lose all previous data
+            }
+
+            // preload data buffer with time and volt
+            for (uint32_t i = 0 ; i < testEndCnt_; i++)
+            {
+                uint64_t t = uint64_t(samplePeriod_)*i;
+                uint16_t volt = analogSubsystem_.VoltToInt(test_->getValue(t));
+                TinySample ts = {(uint16_t) i, volt, 0};
+                dataBuffer_.push_back(ts);
+            }
+        }
+        return status;
+    }
 
     ReturnStatus SystemState::onCommandStopTest(JsonObject &jsonMsg, JsonObject &jsonDat)
     {
@@ -283,7 +333,7 @@ namespace ps
                     status.success = false;
                     status.message = String("json ") + SamplePeriodKey + String(" value is too large");
                 }
-                else if (samplePeriodUs < TestTimerPeriod)
+                else if (samplePeriodUs < MinimumSamplePeriod)
                 {
                     status.success = false;
                     status.message = String("json ") + SamplePeriodKey + String(" value is too small");
@@ -693,6 +743,14 @@ namespace ps
     }
 
 
+    void SystemState::tinySampleToSample(Sample &s, TinySample &ts)
+    {
+        s.t = uint32_t(samplePeriod_)*ts.t;
+        s.volt = analogSubsystem_.VoltToFloat(ts.volt);
+        s.curr = analogSubsystem_.CurrToFloat(ts.curr);
+        s.chan = 0;
+    }
+
     void SystemState::serviceDataBuffer()
     {
         // Check for last sample flag to see if done
@@ -700,6 +758,10 @@ namespace ps
         if (lastSampleFlag_)
         {
             run_complete = true;
+        }
+        else if (dataSendMethod_ == DataBuffered) // We'll process data buffer after lastSampleFlag_ is set
+        {
+            return;
         }
 
         ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
@@ -716,13 +778,15 @@ namespace ps
 
         while (buffer_size > 0)
         {
+            TinySample tsample;
             Sample sample;
             ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
             {
-                sample = dataBuffer_.front();
+                tsample = dataBuffer_.front();
                 dataBuffer_.pop_front();
                 buffer_size = dataBuffer_.size();
             }
+            tinySampleToSample(sample, tsample); // sample <-- tsample
             messageSender_.sendSample(sample);
         }
 
@@ -740,9 +804,30 @@ namespace ps
         testTimerCallback_ = callback;
     }
 
+    void SystemState::updateTestOnTimerFast()
+    {
+        bool done;
+
+        done = (timerCnt_ >= testEndCnt_) || (test_ == nullptr);
+
+        if (done)
+        {
+            stopTest();
+        }
+        else
+        {
+            TinySample &ts = dataBuffer_[timerCnt_];
+            analogSubsystem_.setVoltInt(ts.volt);
+            ts.curr = analogSubsystem_.getCurrInt();
+            timerCnt_++;
+        }
+    }
 
     void SystemState::updateTestOnTimer()
     {
+        if (dataSendMethod_ == DataBuffered)
+            return updateTestOnTimerFast();
+
         bool done = false;
 
         if (test_ == nullptr)
@@ -751,7 +836,7 @@ namespace ps
         }
         else
         {
-            uint32_t t = uint32_t(TestTimerPeriod)*timerCnt_;
+            uint32_t t = uint32_t(testTimerPeriod_)*timerCnt_;
             float volt = test_ -> getValue(t);
             analogSubsystem_.setVolt(volt);
             float curr = analogSubsystem_.getCurr();
@@ -776,8 +861,10 @@ namespace ps
                     // ------------------------------------------------------------------
                     if (timerCnt_%sampleModulus_ == 0)
                     {
-                        Sample sample = {t, volt, currLowPass_[electInd].value(),uint8_t(electNum)};
-                        dataBuffer_.push_back(sample);
+                        uint16_t v = analogSubsystem_.VoltToInt(volt);
+                        uint16_t c = analogSubsystem_.CurrToInt(currLowPass_[electInd].value());
+                        TinySample ts = {(uint16_t)timerCnt_, v, c};
+                        dataBuffer_.push_back(ts);
                         if (multiplexer_.isRunning())
                         {
                             multiplexer_.connectNextEnabledWrkElect();   
@@ -789,11 +876,15 @@ namespace ps
                     // ------------------------------------------------------------------
                     // Send sample for tests which use custom sampling methods
                     // ------------------------------------------------------------------
-                    Sample sampleRaw  = {t, volt, currLowPass_[0].value(),uint8_t(electNum)}; // Raw sample data
+                    Sample sampleRaw  = {t, volt, currLowPass_[elecInd].value(),uint8_t(electNum)}; // Raw sample data
                     Sample sampleTest = {0, 0.0, 0.0, uint8_t(electNum)}; // Custom sample data (set in updateSample)
                     if (test_ -> updateSample(sampleRaw, sampleTest))
                     {
-                        dataBuffer_.push_back(sampleTest);
+                        uint16_t volt = analogSubsystem_.VoltToInt(sampleTest.volt);
+                        uint16_t curr = analogSubsystem_.CurrToInt(sampleTest.curr);
+                        TinySample ts = {(uint16_t)timerCnt_, volt, curr};
+
+                        dataBuffer_.push_back(ts);
                         if (multiplexer_.isRunning())
                         {
                             multiplexer_.connectNextEnabledWrkElect();   
@@ -820,22 +911,23 @@ namespace ps
             analogSubsystem_.autoVoltRange(test_ -> getMinValue(), test_ -> getMaxValue());
 
             test_ -> reset();
+
             if (multiplexer_.isRunning())
             {
                 for (int i=0; i<NumMuxChan; i++)
                 {
                     currLowPass_[i].reset();
                 }
-                lowPassDtSec_ = (1.0e-6*TestTimerPeriod)*float(multiplexer_.numEnabledWrkElect());    
+                lowPassDtSec_ = (1.0e-6*testTimerPeriod_)*float(multiplexer_.numEnabledWrkElect());
             }
             else
             {
                 currLowPass_[0].reset();
-                lowPassDtSec_ = 1.0e-6*TestTimerPeriod;    
+                lowPassDtSec_ = 1.0e-6*testTimerPeriod_;
             }
 
             testInProgress_ = true;
-            testTimer_.begin(testTimerCallback_, TestTimerPeriod);
+            testTimer_.begin(testTimerCallback_, testTimerPeriod_);
         }
     }
 
@@ -858,7 +950,7 @@ namespace ps
 
     void SystemState::setSamplePeriod(uint32_t samplePeriod)
     {
-        samplePeriod_ = constrain(samplePeriod, TestTimerPeriod, MaximumSamplePeriod);
+        samplePeriod_ = constrain(samplePeriod, MinimumSamplePeriod, MaximumSamplePeriod);
         updateSampleModulus();
         voltammetry_.setSamplePeriod(uint64_t(samplePeriod_));
     }
@@ -869,10 +961,16 @@ namespace ps
         return samplePeriod_;
     }
 
+    void SystemState::setTestTimerPeriod(uint32_t value)
+    {
+        testTimerPeriod_ = value;
+        updateSampleModulus();
+        voltammetry_.setTestTimerPeriod(value);
+    }
 
     void SystemState::updateSampleModulus()
     {
-        sampleModulus_ = samplePeriod_/TestTimerPeriod;
+        sampleModulus_ = samplePeriod_/testTimerPeriod_;
     }
 
 }

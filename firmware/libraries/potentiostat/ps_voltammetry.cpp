@@ -174,5 +174,12 @@ namespace ps
         }
     }
 
+    void Voltammetry::setTestTimerPeriod(uint64_t value)
+    {
+        for (size_t i=0; i<availableTests_.size(); i++)
+        {
+            availableTests_[i] -> setTestTimerPeriod(value);
+        }
+    }
 
 } // namespace ps

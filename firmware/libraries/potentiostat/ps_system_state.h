@@ -74,6 +74,7 @@ namespace ps
 
             void setTestTimerCallback(void(*func)());
             void updateTestOnTimer();
+            void updateTestOnTimerFast();
 
 
         protected:
@@ -90,14 +91,17 @@ namespace ps
 
             CommandTable<SystemState,CommandTableMaxSize> commandTable_;
 
-            CircularBuffer<Sample,DataBufferSize> dataBuffer_;
+            CircularBuffer<TinySample,DataBufferSize> dataBuffer_;
             Voltammetry voltammetry_;
 
             IntervalTimer testTimer_;
             void (*testTimerCallback_)() = dummyTimerCallback;
             volatile uint64_t timerCnt_;
+            uint64_t testEndCnt_;
             uint32_t samplePeriod_; 
             uint32_t sampleModulus_;  
+            uint32_t testTimerPeriod_;
+            DataSendMethod dataSendMethod_;
 
             Array<LowPass,NumMuxChan> currLowPass_;
             float lowPassDtSec_;
@@ -105,6 +109,10 @@ namespace ps
 
             static void dummyTimerCallback() {};
             void updateSampleModulus();
+            void setTestTimerPeriod(uint32_t value);
+
+            void tinySampleToSample(Sample &s, TinySample &ts);
+            ReturnStatus setupTestTimerHandler(void);
     };
 
 

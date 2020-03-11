@@ -49,6 +49,7 @@ namespace ps
             float CurrToFloat(uint16_t value) const; // convert known raw (Int) current value to float
             float VoltToFloat(uint16_t value) const; // convert known raw (Int) voltage value to float
             uint16_t VoltToInt(float value) const;   // convert known voltage value to raw (Int)
+            uint16_t CurrToInt(float value) const;   // convert known current value to raw (Int)
 
             // fast accessors for get/set voltage and get current
             inline uint16_t getCurrInt() const { return getTransAmpAin(); }

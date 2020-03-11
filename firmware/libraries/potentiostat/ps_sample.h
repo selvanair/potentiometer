@@ -4,7 +4,7 @@
 namespace ps
 {
 
-    class Sample 
+    class Sample
     {
         public:
 
@@ -12,6 +12,15 @@ namespace ps
             float volt;
             float curr;
             uint8_t chan;
+    };
+
+    class TinySample
+    {
+        public:
+
+            uint16_t t;
+            uint16_t volt;
+            uint16_t curr;
     };
 
 }

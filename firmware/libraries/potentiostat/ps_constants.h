@@ -17,7 +17,7 @@ namespace ps
     const uint32_t CommandTableMaxSize = 40;
     
     // Buffer parameters
-    const uint32_t DataBufferSize = 2000;
+    const uint32_t DataBufferSize = 6000;
     const uint32_t SerialBufferSize = 1000;
     const uint32_t JsonMessageBufferSize = 500;
     const uint32_t JsonTestDataBufferSize = 500;
@@ -126,6 +126,7 @@ namespace ps
     // Timer parameters
     extern const uint32_t TestTimerPeriod;      // us
     extern const uint32_t DefaultSamplePeriod;  // us
+    extern const uint32_t MinimumSamplePeriod;  // us
     extern const uint32_t MaximumSamplePeriod;  // us
 
     // Low pass filter params for current samples
@@ -136,6 +137,7 @@ namespace ps
     const uint32_t MultiStepMaxSize = 50;
 
     enum SampleMethod {SampleGeneric, SampleCustom};
+    enum DataSendMethod {DataProgressive, DataBuffered};
 
     // Multiplexer Parameters
     const uint8_t NumMuxChan = 7;

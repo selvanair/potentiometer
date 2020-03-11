@@ -34,6 +34,7 @@ namespace ps
             virtual float getQuietValue() const;
 
             virtual void setSamplePeriod(uint64_t samplePeriod);
+            virtual void setTestTimerPeriod(uint64_t value);
             virtual uint64_t getSamplePeriod() const;
 
             virtual void setName(String name);
@@ -54,6 +55,7 @@ namespace ps
             uint64_t quietTime_ = 0;
             float quietValue_ = 0.0;
             uint64_t samplePeriod_ = 0;
+            uint64_t testTimerPeriod_ = TestTimerPeriod;
             uint32_t sampleModulus_ = 0;
             String name_ = String("base");
             SampleMethod sampleMethod_ = SampleGeneric;

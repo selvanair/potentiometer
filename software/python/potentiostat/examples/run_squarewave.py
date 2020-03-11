@@ -6,7 +6,7 @@ port = '/dev/ttyACM0'       # Serial port for potentiostat device
 datafile = 'data.txt'       # Output file for time, curr, volt data
 test_name = 'squareWave'    # The name of the test to run
 curr_range = '10uA'         # The name of the current range [-100uA, +100uA]
-sample_rate = 10.0          # The number of samples/second to collect
+sample_rate = 2000.0        # The number of samples/second to collect -- used only for generic sampling
 
 
 # Create dictionary of waveform parameters squarewave annodic stripping
@@ -17,8 +17,8 @@ test_param = {
         'startValue' : -0.4,
         'finalValue' :  0.2,
         'stepValue'  :  0.005,
-        'window'     :  0.2,
-        'modfreq'    :  10.0,
+        'window'     :  -0.2,    # force generic sampling
+        'modfreq'    :  40.0,    # frequency of square-wave modulation in Hz
         }
 
 # Create potentiostat object and set current range, sample rate and test parameters

@@ -33,6 +33,7 @@ namespace ps
             ReturnStatus getMuxTestNames(JsonObject &jsonMsg, JsonObject &jsonDat);
 
             void setSamplePeriod(uint64_t samplePeriod);
+            void setTestTimerPeriod(uint64_t value);
 
             BaseTest baseTest;
             CyclicTest cyclicTest;
