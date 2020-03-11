@@ -18,6 +18,7 @@ test_param = {
         'finalValue' :  0.2,
         'stepValue'  :  0.005,
         'window'     :  0.2,
+        'modfreq'    :  10.0,
         }
 
 # Create potentiostat object and set current range, sample rate and test parameters

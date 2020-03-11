@@ -49,6 +49,7 @@ namespace ps
     const String MuxChannelKey = String("muxChannel");
     const String ConnectedKey = String("connected");
     const String FreeMemKey = String("m");
+    const String ModFreqKey = String("modfreq"); // modulation freqency parameter for tests in Hz
 
     // Json command strings
     const String RunTestCmd = String("runTest");

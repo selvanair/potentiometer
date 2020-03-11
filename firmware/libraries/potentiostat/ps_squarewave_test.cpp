@@ -11,7 +11,7 @@ namespace ps
     { 
         setName("squareWave");
         setMuxCompatible(false);
-        setSampleMethod(SampleCustom);
+        setSampleMethod(SampleCustom);  // use window < 0 to force generic sampling
         updateDoneTime();
         updateMaxMinValues();
         updateStepSign();
@@ -74,7 +74,17 @@ namespace ps
 
     void SquareWaveTest::setWindow(float value)
     {
-        window_ = fabs(value);
+        window_ = value;
+
+        if (value < 0.0)
+        {
+           setSampleMethod(SampleGeneric);
+           return;
+        }
+        else
+        {
+           setSampleMethod(SampleCustom);
+        }
         window_ = max(0.0, window_);
         window_ = min(1.0, window_);
         updateWindowLenUs();
@@ -100,13 +110,26 @@ namespace ps
         return min(minValue, quietValue_);
     }
 
+    // Modulation period (inverse frequency) in usec
+    uint64_t SquareWaveTest::getModPeriod() const
+    {
+        return modPeriod_;
+    }
+
+    // Modulation period (inverse frequency) in usec
+    // Set using json key modfreq with freqency in Hz
+    void SquareWaveTest::setModPeriod(uint64_t modPeriod)
+    {
+        if (modPeriod < 0) modPeriod = 1;
+        modPeriod_ = modPeriod;
+        halfModPeriod_ = modPeriod >> 1;
+        updateDoneTime();
+        updateWindowLenUs();
+    }
 
     void SquareWaveTest::setSamplePeriod(uint64_t samplePeriod)
     {
         BaseTest::setSamplePeriod(samplePeriod);
-        halfSamplePeriod_ = samplePeriod >> 1;
-        updateDoneTime();
-        updateWindowLenUs();
     }
 
     bool SquareWaveTest::isDone(uint64_t t) const 
@@ -148,9 +171,9 @@ namespace ps
         }
         else
         {
-            uint64_t stepModPos = (t - quietTime_)%samplePeriod_;
+            uint64_t stepModPos = (t - quietTime_)%modPeriod_;
             float stairValue = getStairValue(t);
-            if (stepModPos < halfSamplePeriod_)
+            if (stepModPos < halfModPeriod_)
             {
                 value = stairValue + amplitude_;
             }
@@ -173,7 +196,7 @@ namespace ps
         else
         {
             uint64_t tTest = t - quietTime_;
-            uint64_t stepCount = tTest/samplePeriod_;
+            uint64_t stepCount = tTest/modPeriod_;
             stairValue = startValue_ + stepCount*stepSign_*stepValue_;
             stairValue = max(stairValue, minValue_);
             stairValue = min(stairValue, maxValue_);
@@ -186,12 +209,13 @@ namespace ps
     {
         bool newSample = false;
 
+        uint64_t t = sampleRaw.t;
         if (sampleRaw.t < quietTime_)
         {
-            if ((testCnt_ > 0) && (testCnt_%sampleModulus_==0))
+            if ((testCnt_ > 0) && (t%modPeriod_==0))
             {
                 sampleTest.t = sampleRaw.t;
-                sampleTest.volt = quietValue_;
+                sampleTest.volt = 0.0;
                 sampleTest.curr =  0.0;
                 newSample = true;
             }
@@ -206,12 +230,12 @@ namespace ps
             }
 
             uint64_t tTest = (sampleRaw.t - quietTime_);
-            uint64_t stepModPos = tTest%samplePeriod_;
+            uint64_t stepModPos = tTest%modPeriod_;
 
-            if (stepModPos < halfSamplePeriod_)
+            if (stepModPos < halfModPeriod_)
             {
                 // forward step
-                if ((halfSamplePeriod_ - stepModPos - 1) < windowLenUs_)
+                if ((halfModPeriod_ - stepModPos - 1) < windowLenUs_)
                 {
                     numForward_++;
                     currForward_ += sampleRaw.curr;
@@ -220,14 +244,14 @@ namespace ps
             else
             {
                 // reverse step
-                if ((samplePeriod_ - stepModPos - 1) < windowLenUs_)
+                if ((modPeriod_ - stepModPos - 1) < windowLenUs_)
                 {
                     numReverse_++;
                     currReverse_ += sampleRaw.curr;
                 }
             }
 
-            if ((testCnt_ > 0) && (testCnt_%sampleModulus_==0))
+            if ((testCnt_ > 0) && (t%modPeriod_==0))
             {
                 sampleTest.t = sampleRaw.t;
                 sampleTest.volt = getStairValue(sampleRaw.t);
@@ -259,6 +283,7 @@ namespace ps
             jsonDatPrm.set(StepValueKey, stepValue_);
             jsonDatPrm.set(AmplitudeKey, amplitude_);
             jsonDatPrm.set(WindowKey, window_);
+            jsonDatPrm.set(ModFreqKey, 1.0e6/modPeriod_);
         }
     }
 
@@ -287,6 +312,7 @@ namespace ps
         setStepValueFromJson(jsonMsgPrm,jsonDatPrm,status);
         setAmplitudeFromJson(jsonMsgPrm,jsonDatPrm,status);
         setWindowFromJson(jsonMsgPrm,jsonDatPrm,status);
+        setModPeriodFromJson(jsonMsgPrm,jsonDatPrm,status);
         return status;
     }
 
@@ -298,7 +324,7 @@ namespace ps
         if (stepValue_ > 0.0) 
         {
             uint64_t numSteps_ = uint64_t(ceil(fabs(finalValue_ - startValue_)/stepValue_))+1;
-            uint64_t testDuration = numSteps_*uint64_t(samplePeriod_);
+            uint64_t testDuration = numSteps_*uint64_t(modPeriod_);
             doneTime_ = quietTime_ + testDuration;
         }
         else
@@ -317,8 +343,8 @@ namespace ps
 
     void SquareWaveTest::updateWindowLenUs()
     {
-        windowLenUs_ = uint64_t((halfSamplePeriod_- 1)*window_);
-        windowLenUs_ = min(halfSamplePeriod_- 1, windowLenUs_);
+        windowLenUs_ = uint64_t((halfModPeriod_- 1)*window_);
+        windowLenUs_ = min(halfModPeriod_- 1, windowLenUs_);
         windowLenUs_ = max(uint64_t(1), windowLenUs_);
     }
 
@@ -442,6 +468,39 @@ namespace ps
                 status.success = false;
                 String errorMsg = WindowKey + String(" not a float");
                 status.appendToMessage(errorMsg);
+            }
+        }
+    }
+
+    void SquareWaveTest::setModPeriodFromJson(JsonObject &jsonMsgPrm, JsonObject &jsonDatPrm, ReturnStatus &status)
+    {
+        if (jsonMsgPrm.containsKey(ModFreqKey))
+        {
+            float f = 1.0;;
+            if (jsonMsgPrm[ModFreqKey].is<float>())
+            {
+                f = jsonMsgPrm.get<float>(ModFreqKey);
+            }
+            else if (jsonMsgPrm[ModFreqKey].is<float>())
+            {
+                f = jsonMsgPrm.get<float>(ModFreqKey);
+            }
+            else
+            {
+                status.success = false;
+                String errorMsg = ModFreqKey + String(" not a long or float");
+                status.appendToMessage(errorMsg);
+            }
+            if (f <= 0.0)
+            {
+                status.success = false;
+                String errorMsg = ModFreqKey + String(" too small: use a value > 1/MinimumSamplingPeriod");
+                status.appendToMessage(errorMsg);
+            }
+            else
+            {
+               setModPeriod(int(1.0e6/f));
+               jsonDatPrm.set(ModFreqKey,1.0e6/getModPeriod());
             }
         }
     }

@@ -25,6 +25,9 @@ namespace ps
             void setWindow(float value);
             float getWindow();
 
+            void setModPeriod(uint64_t);
+            uint64_t getModPeriod() const;
+
             virtual bool isDone(uint64_t t) const override; 
             virtual uint64_t getDoneTime() const override;
             virtual void reset();
@@ -55,7 +58,8 @@ namespace ps
             float stepSign_ = 1.0;
 
             uint64_t doneTime_ = 0;
-            uint64_t halfSamplePeriod_ = 0;
+            uint64_t modPeriod_ = 0;
+            uint64_t halfModPeriod_ = 0;
             uint64_t windowLenUs_ = 0; 
 
             bool isFirst_ = true;
@@ -77,6 +81,7 @@ namespace ps
             void setStepValueFromJson(JsonObject &jsonMsgPrm, JsonObject &jsonDatPrm, ReturnStatus &status);
             void setAmplitudeFromJson(JsonObject &jsonMsgPrm, JsonObject &jsonDatPrm, ReturnStatus &status);
             void setWindowFromJson(JsonObject &jsonMsgPrm, JsonObject &jsonDatPrm, ReturnStatus &status);
+            void setModPeriodFromJson(JsonObject &jsonMsgPrm, JsonObject &jsonDatPrm, ReturnStatus &status);
     };
 
 

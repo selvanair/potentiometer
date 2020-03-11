@@ -65,6 +65,7 @@ namespace ps
     extern const String MuxChannelKey;
     extern const String ConnectedKey;
     extern const String FreeMemKey;
+    extern const String ModFreqKey;
 
     // Json command strings
     extern const String RunTestCmd;
