@@ -73,6 +73,24 @@ namespace ps
         return currRange_.intToValue(getTransAmpAin());
     }
 
+    // Convert raw value voltage to float
+    float AnalogSubsystem::VoltToFloat(uint16_t value) const
+    {
+        return SignDac*voltRange_.intToValue(value);
+    }
+
+    // Convert float value voltage to raw
+    uint16_t AnalogSubsystem::VoltToInt(float value) const
+    {
+        return voltRange_.valueToInt(SignDac*value);
+    }
+
+    // Convert raw value current to float
+    float AnalogSubsystem::CurrToFloat(uint16_t value) const
+    {
+        return currRange_.intToValue(value);
+    }
+
 
     float AnalogSubsystem::getRefElectVolt() const   
     {
