@@ -314,23 +314,25 @@ class Potentiostat(serial.Serial):
 
 
     def set_sample_period(self,sample_period):
-        """Sets the sample period (s) used for measurements. The sample period is the
+        """Sets the sample period (in ms) used for measurements. The sample period is the
         time between samples. 
 
         """
-        cmd_dict = {CommandKey: SetSamplePeriodCmd, SamplePeriodKey: sample_period}
+        # firmware expects it in micro seconds
+        cmd_dict = {CommandKey: SetSamplePeriodCmd, SamplePeriodKey: int(sample_period*1000)}
         msg_dict = self.send_cmd(cmd_dict)
         return msg_dict[ResponseKey][SamplePeriodKey]
 
 
     def get_sample_period(self):
-        """Gets the current value for the sample period (s). The sample period is the
+        """Gets the current value for the sample period (in ms). The sample period is the
         time between samples.
 
         """
         cmd_dict = {CommandKey: GetSamplePeriodCmd}
         msg_dict = self.send_cmd(cmd_dict)
-        return msg_dict[ResponseKey][SamplePeriodKey]
+        # firmware returns it in micro seconds
+        return msg_dict[ResponseKey][SamplePeriodKey]/1000.0
 
 
     def set_sample_rate(self,sample_rate):
@@ -338,7 +340,7 @@ class Potentiostat(serial.Serial):
         the sample period. 
 
         """
-        sample_period = int(1.0e3/sample_rate)
+        sample_period = 1.0e3/sample_rate
         return self.set_sample_period(sample_period)
 
 

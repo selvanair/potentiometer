@@ -276,8 +276,7 @@ namespace ps
             }
             else
             {
-                uint32_t samplePeriodMs = jsonMsg.get<uint32_t>(SamplePeriodKey);
-                uint32_t samplePeriodUs = uint32_t(convertMsToUs(samplePeriodMs));
+                uint32_t samplePeriodUs = jsonMsg.get<uint32_t>(SamplePeriodKey);
                 if (samplePeriodUs > MaximumSamplePeriod)
                 {
                     status.success = false;
@@ -291,7 +290,7 @@ namespace ps
                 else
                 {
                     setSamplePeriod(samplePeriodUs);
-                    jsonDat.set(SamplePeriodKey,convertUsToMs(getSamplePeriod()));
+                    jsonDat.set(SamplePeriodKey,getSamplePeriod());
                 }
             }
         }
@@ -302,7 +301,7 @@ namespace ps
     ReturnStatus SystemState::onCommandGetSamplePeriod(JsonObject &jsonMsg, JsonObject &jsonDat)
     {
         ReturnStatus status;
-        jsonDat.set(SamplePeriodKey,convertUsToMs(getSamplePeriod()));
+        jsonDat.set(SamplePeriodKey,getSamplePeriod());
         return status;
     }
 
