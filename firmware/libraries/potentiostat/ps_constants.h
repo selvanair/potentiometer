@@ -17,10 +17,10 @@ namespace ps
     const uint32_t CommandTableMaxSize = 40;
     
     // Buffer parameters
-    const uint32_t DataBufferSize = 1000;
+    const uint32_t DataBufferSize = 2000;
     const uint32_t SerialBufferSize = 1000;
-    const uint32_t JsonMessageBufferSize = 5000;
-    const uint32_t JsonTestDataBufferSize = 5000;
+    const uint32_t JsonMessageBufferSize = 500;
+    const uint32_t JsonTestDataBufferSize = 500;
 
     // Device ID EEPROM address
     extern const uint32_t EEPROM_DeviceIdAddress;
