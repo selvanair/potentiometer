@@ -1,5 +1,7 @@
 #include "ps_message_sender.h"
 #include "ps_time_utils.h"
+#include "freemem.h"
+#include "util/atomic.h"
 
 namespace ps
 {
@@ -16,6 +18,13 @@ namespace ps
         {
             jsonMsg.set(MessageKey, status.message);
         }
+        uint16_t m;
+        ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
+        {
+            // checks free momory and returns min value so far
+            m = min_freemem();
+        }
+        jsonDat.set(FreeMemKey, m);
         jsonMsg.set(ResponseKey, jsonDat);
         jsonMsg.printTo(Serial);
         Serial.println();
@@ -29,6 +38,14 @@ namespace ps
         jsonSample.set(VoltKey, sample.volt);
         jsonSample.set(CurrKey, sample.curr);
         jsonSample.set(CurrFKey, sample.currF);
+
+        uint16_t m;
+        ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
+        {
+            // checks free momory and returns min value so far
+            m = min_freemem();
+        }
+        jsonSample.set(FreeMemKey, m);
         if (sample.chan > 0)
         {
             jsonSample.set(ChanKey, sample.chan);
