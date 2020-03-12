@@ -34,7 +34,7 @@ namespace ps
     {
         StaticJsonBuffer<JsonMessageBufferSize> jsonBuffer;
         JsonObject &jsonSample = jsonBuffer.createObject();
-        jsonSample.set(TimeKey, convertUsToMs(sample.t)); 
+        jsonSample.set(TimeKey, sample.t);
         jsonSample.set(VoltKey, sample.volt);
         jsonSample.set(CurrKey, sample.curr);
         uint16_t m;

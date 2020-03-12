@@ -550,7 +550,7 @@ class Potentiostat(serial.Serial):
             sample_dict = json.loads(sample_json.decode())
 
             if len(sample_dict) > 0:
-                tval = sample_dict[TimeKey]*TimeUnitToScale[timeunit]
+                tval = sample_dict[TimeKey]*1e-3*TimeUnitToScale[timeunit] # test time is now returned in us
                 volt = sample_dict[VoltKey]
                 curr = sample_dict[CurrKey]
                 chan = 0  # Dummy channel used when mux isn't running
@@ -564,16 +564,16 @@ class Potentiostat(serial.Serial):
                 # Write data to file
                 if (filename is not None) and (output_filetype == TxtOutputFileType):
                     if chan == 0:
-                        fid.write('{0:1.3f}, {1:1.4f}, {2:1.4f}\n'.format(tval,volt,curr))
+                        fid.write('{0:1.6f}, {1:1.4f}, {2:1.4f}\n'.format(tval,volt,curr))
                     else:
-                        fid.write('{0}, {1:1.3f}, {2:1.4f}, {3:1.4f}\n'.format(chan,tval,volt,curr))
+                        fid.write('{0}, {1:1.6f}, {2:1.4f}, {3:1.4f}\n'.format(chan,tval,volt,curr))
 
                 # Handle diplay options
                 if display == 'data':
                     if chan == 0:
-                        print('{0:1.3f}, {1:1.4f}, {2:1.4f}'.format(tval,volt,curr))
+                        print('{0:1.6f}, {1:1.4f}, {2:1.4f}'.format(tval,volt,curr))
                     else:
-                        print('ch{0}: {1:1.3f}, {2:1.4f}, {3:1.4f}'.format(chan,tval,volt,curr))
+                        print('ch{0}: {1:1.6f}, {2:1.4f}, {3:1.4f}'.format(chan,tval,volt,curr))
 
                 elif display == 'pbar':
                     pbar.update(tval)
