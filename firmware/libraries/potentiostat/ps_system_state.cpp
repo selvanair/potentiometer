@@ -66,8 +66,42 @@ namespace ps
         analogSubsystem_.setVolt(0.0);
         messageReceiver_.reset();
 
+        doSpeedTest();
     }
 
+    uint32_t timeElapsed1 = 0;
+    uint32_t timeElapsed2 = 0;
+
+    void SystemState::doSpeedTest()
+    {
+        test_ = voltammetry_.getTest("constant");
+        if (test_ == nullptr) return;
+
+        // use default params for the test -- long duration and 1 Volt
+        uint32_t start = micros();
+        for (int i = 0; i < 1000; i++)
+        {
+           updateTestOnTimer();
+        }
+        timeElapsed1 = micros() - start;
+
+        analogSubsystem_.setVolt(0.0);
+        test_->reset();
+        dataBuffer_.clear();
+
+        uint16_t curr;
+        start = micros();
+        for (int i = 0; i < 1000; i++)
+        {
+           analogSubsystem_.setVoltInt(uint16_t(i));
+           curr = analogSubsystem_.getCurrInt();
+           tinyDataBuffer_[i].curr = curr;
+        }
+        timeElapsed2 = micros() - start;
+
+        // at this point speedTimerCount conatins number of timer events
+        // for 1000 calls of test update return it with
+    }
 
     ReturnStatus SystemState::onCommandRunTest(JsonObject &jsonMsg, JsonObject &jsonDat)
     {
@@ -124,6 +158,7 @@ namespace ps
             setTestTimerPeriod(TestTimerPeriod);
 
             dataSendMethod_ = DataProgressive; // progressively send data during the test
+            timeElapsed1 = micros();
         }
         else
         {
@@ -142,6 +177,7 @@ namespace ps
             setTestTimerPeriod(samplePeriod_);
 
             dataSendMethod_ = DataBuffered; // send data after the test is complete
+            timeElapsed2 = micros();
 
             ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
             {
@@ -378,6 +414,8 @@ namespace ps
     {
         ReturnStatus status;
         jsonDat.set(VersionKey,FirmwareVersion);
+        jsonDat.set("timeElasped1", timeElapsed1);
+        jsonDat.set("timeElapsed2", timeElapsed2);
         return status;
     }
 
@@ -940,6 +978,11 @@ namespace ps
 
     void SystemState::stopTest()
     {
+        if (dataSendMethod_ == DataBuffered)
+           timeElapsed2 = micros() - timeElapsed2; // call get_firmware after the run to get these
+        else
+           timeElapsed1 = micros() - timeElapsed1;
+
         testTimer_.end();
         testInProgress_ = false;
         lastSampleFlag_ = true;

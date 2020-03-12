@@ -114,6 +114,7 @@ namespace ps
 
             void tinySampleToSample(Sample &s, TinySample &ts);
             ReturnStatus setupTestTimerHandler(void);
+            void doSpeedTest(void);
     };
 
 
