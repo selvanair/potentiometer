@@ -63,8 +63,33 @@ namespace ps
         analogSubsystem_.setVolt(0.0);
         messageReceiver_.reset();
 
+        doSpeedTest();
     }
 
+    static uint32_t speedTimerCount = 0;
+    void speedTimerCallback(void)
+    {
+        speedTimerCount++;
+    }
+
+    void SystemState::doSpeedTest()
+    {
+        test_ = voltammetry_.getTest("constant");
+        if (test_ == nullptr) return;
+
+        // use default params for the test -- long duration and 1 Volt
+        testTimer_.begin(speedTimerCallback, TestTimerPeriod);
+        for (int i = 0; i < 5000; i++)
+        {
+           updateTestOnTimer();
+        }
+        testTimer_.end();
+        analogSubsystem_.setVolt(0.0);
+        test_->reset();
+        dataBuffer_.clear();
+        // at this point speedTimerCount conatins number of timer events
+        // for 1000 calls of test update return it with
+    }
 
     ReturnStatus SystemState::onCommandRunTest(JsonObject &jsonMsg, JsonObject &jsonDat)
     {
@@ -327,6 +352,7 @@ namespace ps
     {
         ReturnStatus status;
         jsonDat.set(VersionKey,FirmwareVersion);
+        jsonDat.set("speed", 5000.0*1e-6/float(speedTimerCount*TestTimerPeriod)); // in calls/usec
         return status;
     }
 

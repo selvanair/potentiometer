@@ -105,6 +105,7 @@ namespace ps
 
             static void dummyTimerCallback() {};
             void updateSampleModulus();
+            void doSpeedTest(void);
     };
 
 
