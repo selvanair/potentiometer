@@ -15,6 +15,7 @@ namespace ps
         test_ = nullptr;
         testTimerPeriod_ = TestTimerPeriod;
         dataSendMethod_ = DataProgressive;
+        tinyDataBuffer_ = reinterpret_cast<TinySample*>(&dataBuffer_.front());
 
         //currLowPass_.setParam(CurrLowPassParam);
         for (int i=0; i<NumMuxChan; i++)
@@ -127,10 +128,11 @@ namespace ps
         else
         {
             // use timer period same as sample perod and buffer samples till end of test
+            // Also interpret the buffer array as that of TinySample
             uint64_t timemax = test_->getDoneTime();
             testEndCnt_ = int(timemax/samplePeriod_);
 
-            if (testEndCnt_ > DataBufferSize)
+            if (testEndCnt_ > DataBufferSize*sizeof(Sample)/sizeof(TinySample))
             {
                 status.success = false;
                 status.message = "Not enough sapce for fast sampling run. Reduce number of samples.";
@@ -146,13 +148,12 @@ namespace ps
                 dataBuffer_.clear(); // this will lose all previous data
             }
 
-            // preload data buffer with time and volt
+            // preload data buffer with volt
             for (uint32_t i = 0 ; i < testEndCnt_; i++)
             {
-                uint64_t t = uint64_t(samplePeriod_)*i;
+                uint64_t t = uint64_t(testTimerPeriod_)*i;
                 uint16_t volt = analogSubsystem_.VoltToInt(test_->getValue(t));
-                TinySample ts = {(uint16_t) i, volt, 0};
-                dataBuffer_.push_back(ts);
+                tinyDataBuffer_[i].volt = volt;
             }
         }
         return status;
@@ -745,10 +746,8 @@ namespace ps
 
     void SystemState::tinySampleToSample(Sample &s, TinySample &ts)
     {
-        s.t = uint32_t(samplePeriod_)*ts.t;
         s.volt = analogSubsystem_.VoltToFloat(ts.volt);
         s.curr = analogSubsystem_.CurrToFloat(ts.curr);
-        s.chan = 0;
     }
 
     void SystemState::serviceDataBuffer()
@@ -759,8 +758,23 @@ namespace ps
         {
             run_complete = true;
         }
-        else if (dataSendMethod_ == DataBuffered) // We'll process data buffer after lastSampleFlag_ is set
+
+        if (dataSendMethod_ == DataBuffered)
         {
+            // In this case we process the whole data buffer when run is complete
+            if (run_complete)
+            {
+                Sample sample;
+                sample.chan = 0; // not available in this version -- user can recover it by post processing
+                for (uint32_t i=0 ; i < testEndCnt_; i++)
+                {
+                    tinySampleToSample(sample, tinyDataBuffer_[i]);
+                    sample.t = uint32_t(testTimerPeriod_)*i;
+                    messageSender_.sendSample(sample);
+                }
+                messageSender_.sendSampleEnd();
+                lastSampleFlag_ = false;
+            }
             return;
         }
 
@@ -778,15 +792,13 @@ namespace ps
 
         while (buffer_size > 0)
         {
-            TinySample tsample;
             Sample sample;
             ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
             {
-                tsample = dataBuffer_.front();
+                sample = dataBuffer_.front();
                 dataBuffer_.pop_front();
                 buffer_size = dataBuffer_.size();
             }
-            tinySampleToSample(sample, tsample); // sample <-- tsample
             messageSender_.sendSample(sample);
         }
 
@@ -816,7 +828,7 @@ namespace ps
         }
         else
         {
-            TinySample &ts = dataBuffer_[timerCnt_];
+            TinySample &ts = tinyDataBuffer_[timerCnt_];
             analogSubsystem_.setVoltInt(ts.volt);
             ts.curr = analogSubsystem_.getCurrInt();
             timerCnt_++;
@@ -861,10 +873,8 @@ namespace ps
                     // ------------------------------------------------------------------
                     if (timerCnt_%sampleModulus_ == 0)
                     {
-                        uint16_t v = analogSubsystem_.VoltToInt(volt);
-                        uint16_t c = analogSubsystem_.CurrToInt(currLowPass_[electInd].value());
-                        TinySample ts = {(uint16_t)timerCnt_, v, c};
-                        dataBuffer_.push_back(ts);
+                        Sample sample = {t, volt, currLowPass_[electInd].value(),uint32_t(electNum)};
+                        dataBuffer_.push_back(sample);
                         if (multiplexer_.isRunning())
                         {
                             multiplexer_.connectNextEnabledWrkElect();   
@@ -876,15 +886,11 @@ namespace ps
                     // ------------------------------------------------------------------
                     // Send sample for tests which use custom sampling methods
                     // ------------------------------------------------------------------
-                    Sample sampleRaw  = {t, volt, currLowPass_[elecInd].value(),uint8_t(electNum)}; // Raw sample data
-                    Sample sampleTest = {0, 0.0, 0.0, uint8_t(electNum)}; // Custom sample data (set in updateSample)
+                    Sample sampleRaw  = {t, volt, currLowPass_[electInd].value(),uint32_t(electNum)}; // Raw sample data
+                    Sample sampleTest = {0, 0.0, 0.0, uint32_t(electNum)}; // Custom sample data (set in updateSample)
                     if (test_ -> updateSample(sampleRaw, sampleTest))
                     {
-                        uint16_t volt = analogSubsystem_.VoltToInt(sampleTest.volt);
-                        uint16_t curr = analogSubsystem_.CurrToInt(sampleTest.curr);
-                        TinySample ts = {(uint16_t)timerCnt_, volt, curr};
-
-                        dataBuffer_.push_back(ts);
+                        dataBuffer_.push_back(sampleTest);
                         if (multiplexer_.isRunning())
                         {
                             multiplexer_.connectNextEnabledWrkElect();   

@@ -91,7 +91,8 @@ namespace ps
 
             CommandTable<SystemState,CommandTableMaxSize> commandTable_;
 
-            CircularBuffer<TinySample,DataBufferSize> dataBuffer_;
+            CircularBuffer<Sample,DataBufferSize> dataBuffer_;
+            TinySample *tinyDataBuffer_;
             Voltammetry voltammetry_;
 
             IntervalTimer testTimer_;

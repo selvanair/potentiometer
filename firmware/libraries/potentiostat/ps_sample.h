@@ -11,16 +11,15 @@ namespace ps
             uint32_t t;
             float volt;
             float curr;
-            uint8_t chan;
+            uint32_t chan; // make it a clean struct of 16 bytes
     };
 
     class TinySample
     {
         public:
 
-            uint16_t t;
             uint16_t volt;
-            uint16_t curr;
+            uint16_t curr; // struct of 4 bytes -- fits 4 in one struct Sample
     };
 
 }

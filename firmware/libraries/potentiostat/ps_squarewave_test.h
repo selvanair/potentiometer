@@ -58,8 +58,8 @@ namespace ps
             float stepSign_ = 1.0;
 
             uint64_t doneTime_ = 0;
-            uint64_t modPeriod_ = 0;
-            uint64_t halfModPeriod_ = 0;
+            uint64_t modPeriod_ = 200;
+            uint64_t halfModPeriod_ = 100;
             uint64_t windowLenUs_ = 0; 
 
             bool isFirst_ = true;
