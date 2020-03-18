@@ -416,6 +416,7 @@ namespace ps
         jsonDat.set(VersionKey,FirmwareVersion);
         jsonDat.set("timeElasped1", timeElapsed1);
         jsonDat.set("timeElapsed2", timeElapsed2);
+        jsonDat.set(FreeMemkey, min_freemem());
         return status;
     }
 

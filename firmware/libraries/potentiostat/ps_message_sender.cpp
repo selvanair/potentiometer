@@ -18,13 +18,11 @@ namespace ps
         {
             jsonMsg.set(MessageKey, status.message);
         }
-        uint16_t m;
         ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
         {
-            // checks free momory and returns min value so far
-            m = min_freemem();
+            // checks free momory to get it updated - use firmware cmd to get it returned
+            min_freemem();
         }
-        jsonDat.set(FreeMemKey, m);
         jsonMsg.set(ResponseKey, jsonDat);
         jsonMsg.printTo(Serial);
         Serial.println();
@@ -37,13 +35,11 @@ namespace ps
         jsonSample.set(TimeKey, sample.t);
         jsonSample.set(VoltKey, sample.volt);
         jsonSample.set(CurrKey, sample.curr);
-        uint16_t m;
         ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
         {
-            // checks free momory and returns min value so far
-            m = min_freemem();
+            // checks free momory to get it updated - use firmware cmd to get it returned
+            min_freemem();
         }
-        jsonSample.set(FreeMemKey, m);
         if (sample.chan > 0)
         {
             jsonSample.set(ChanKey, sample.chan);
