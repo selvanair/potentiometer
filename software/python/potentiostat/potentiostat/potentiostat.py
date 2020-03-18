@@ -157,12 +157,12 @@ class Potentiostat(serial.Serial):
         params = {'baudrate': self.Baudrate, 'timeout': timeout}
         super(Potentiostat,self).__init__(port,**params)
         time.sleep(self.ResetSleepDt)
+        self.test_running = False
         atexit.register(self.atexit_cleanup)
         while self.inWaiting() > 0:
             val = self.read()
         self.hw_variant = self.get_hardware_variant()
         self.firmware_version = self.get_firmware_version()
-        self.test_running = False
 
 
     def get_hardware_variant(self):

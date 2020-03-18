@@ -199,6 +199,13 @@ namespace ps
     {
         ReturnStatus status;
         stopTest();
+        // We treat this as an order from front end to abort.
+        // If buffered data run is in progress, set test end count to zero so that serviceDataBuffer
+        // can exit without sending stale data
+        if (dataSendMethod_ == DataBuffered)
+        {
+           testEndCnt_ = 0;
+        }
         return status;
     }
 
@@ -980,7 +987,9 @@ namespace ps
     void SystemState::stopTest()
     {
         if (dataSendMethod_ == DataBuffered)
+        {
            timeElapsed2 = micros() - timeElapsed2; // call get_firmware after the run to get these
+        }
         else
            timeElapsed1 = micros() - timeElapsed1;
 
