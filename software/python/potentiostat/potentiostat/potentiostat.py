@@ -161,6 +161,8 @@ class Potentiostat(serial.Serial):
         atexit.register(self.atexit_cleanup)
         while self.inWaiting() > 0:
             val = self.read()
+        self.reset_input_buffer();
+        self.reset_output_buffer();
         self.hw_variant = self.get_hardware_variant()
         self.firmware_version = self.get_firmware_version()
 
